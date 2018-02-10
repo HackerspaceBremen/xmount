@@ -1,0 +1,163 @@
+#!/bin/bash
+
+##########################################
+#------------------INFO------------------#
+##########################################
+
+# Description	:	'xmount' extends the 'mount' command to automatically detect and mount multiple partitions in file images.
+#					If more than one partition / file system is detected, one can be selected and mounted in a loop device.
+#
+# Notes			:	'xmount' can be used in the same way as the 'mount' command.
+#					Examples:
+#						xmount -o loop <image file> <mountdir>
+#						xmount --xinfo
+# Links			:	GitHub				- https://github.com/skynet-devel/xmount
+#					Arch-Linux AUR		- Comming soon!
+
+Sname="${0##*/}"
+Version="1.0.0"
+Date="2018-02-09"
+
+Dependencies=('parted')
+
+Author="skynet-devel"
+Licence="GPLv3"
+Bugreports="skynet-devel@mailbox.org"
+Donation_PayPal="shopping@top-email.net"
+
+##########################################
+#-----------Please_report_bugs-----------#
+##########################################
+
+
+### SET VARIABLES ###
+tmp_file="/tmp/${Sname}_tmp.txt"
+
+### GLOBAL SETTINGS ###
+echo() { builtin echo -e "$@" ;}
+read() { builtin read -r "$@" ;}
+
+_msg() { echo -e "${Sname}: $*" ;}
+_err() { echo -e "${Sname}: ERROR: $*" >&2 ;}
+
+trap 'rm -f "${tmp_file}"; echo "\\n"; exit 1' INT TERM HUP
+
+_xinfo()
+{
+cat << EOF
+${Sname} - HELP
+
+DESCRIPTION:
+   '${Sname}' extends the 'mount' command to automatically detect and mount multiple partitions in file images.
+   If more than one partition / file system is detected, one can be selected and mounted in a loop device.
+   It can be used in the same way as the 'mount' command.
+
+EXAMPLES:
+   ${Sname} -o loop <image file> <mountdir>
+   ${Sname} --xinfo
+
+REPORTING BUGS:
+   E-Mail: <${Bugreports}>
+
+DONATIONS:
+   Paypal: <${Donation_PayPal}>
+
+VERSION: ${Version} | DATE: ${Date} | LICENCE: ${Licence} | AUTHOR: ${Author}
+
+Try 'mount --help' for more information.
+
+EOF
+}
+
+### DEFINE FUNCTIONS ###
+_chk-deps()
+{
+	local c missing_deps
+
+	for (( c=0 ; c<${#Dependencies[*]} ; c++ )); do
+		if ! which "${Dependencies[$c]}" &>/dev/null; then
+			missing_deps[$c]="'${Dependencies[$c]}'"
+		fi
+	done
+
+	if (( ${#missing_deps[*]}>0 )); then
+		_err "missing dependencies = ${missing_deps[*]}"; exit 1
+	fi
+}
+
+_chk-opts()
+{
+	local opt
+
+	opt="$(getopt --options 'o:' --long 'options:,source:,xinfo' --quiet -- "$@")"
+	eval set -- "${opt}"
+
+	while true; do
+		case "${1}" in
+			('-o'|'--options')
+				[[ "${2}" == *loop* ]] && loop="1"
+				[[ "${2}" == *offset* ]] && unset loop
+				[[ "${2}" == *sizelimit* ]] && unset loop
+				shift 2 ;;
+			('--source')
+				source_file="${2}"
+				shift 2 ;;
+			('--xinfo')
+				_xinfo; exit ;;
+			('--')
+				shift; break ;;
+			(*)
+				shift ;;
+		esac
+	done
+
+	[[ "${source_file}" ]] || source_file="${1}"
+}
+
+_parse-multifs()
+{
+	local log_sector_size part_{num,data,start,end}
+
+	if ! parted -s "${source_file}" print &>/dev/null; then
+		# File does not contain a recognized partition table
+			return 1
+	else
+		# File contains a recognized partition table
+			parted -m "${source_file}" unit s print 2>/dev/null > "${tmp_file}"
+			log_sector_size="$(grep "${source_file}" "${tmp_file}" | tr -d ';' | cut -d: -f4)"
+			part_num="$(grep -c "^[[:digit:]]" "${tmp_file}")"
+
+			# File contains only one file system
+			(( part_num==1 )) && return 1
+
+			_msg "Partition table detected: logical sector size='${log_sector_size}', partitions='${part_num}'\\n"
+
+			parted -s "${source_file}" print
+			while read -p "Select the number of the partition to mount: "; do
+				echo
+				[[ "${REPLY}" =~ ^[[:digit:]]+$ ]] || continue
+				if (( REPLY>=1 && REPLY<=part_num )); then
+					# Fields:	Number[1]:Start[2]:End[3]:Size[4]:Filesystem[5]:Name[6]:Flags[7]
+					part_data="$(grep "^${REPLY}" "${tmp_file}" | tr -d ';')"
+					rm -f "${tmp_file}"
+
+					part_start="$(echo "${part_data}" | cut -d: -f2 | tr -d 's')"
+					part_end="$(echo "${part_data}" | cut -d: -f3 | tr -d 's')"
+
+					offset="$(( part_start*log_sector_size ))"
+					sizelimit="$(( part_end*log_sector_size ))"
+					break
+				fi
+			done
+	fi
+}
+
+### MAIN PROGRAMM ###
+_chk-deps
+_chk-opts "$@"
+
+if [[ "${loop}" && "${source_file}" ]] && _parse-multifs; then
+	mount -o offset="${offset}",sizelimit="${sizelimit}" "$@"
+else
+	mount "$@"
+fi
