@@ -11,12 +11,11 @@
 #					Examples:
 #						xmount -o loop <image file> <mountdir>
 #						xmount --xinfo
-# Links			:	GitHub				- https://github.com/skynet-devel/xmount
-#					Arch-Linux AUR		- Comming soon!
+# Links			:	GitHub		- https://github.com/HackerspaceBremen/xmount
 
 Sname="${0##*/}"
 Version="1.0.0"
-Date="2018-02-09"
+Date="2018-02-10"
 
 Dependencies=('parted')
 
