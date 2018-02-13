@@ -14,8 +14,8 @@
 # Links			:	GitHub		- https://github.com/HackerspaceBremen/xmount
 
 Sname="${0##*/}"
-Version="1.0.0"
-Date="2018-02-10"
+Version="1.0.1"
+Date="2018-02-13"
 
 Dependencies=('parted')
 
@@ -138,8 +138,6 @@ _parse-multifs()
 				if (( REPLY>=1 && REPLY<=part_num )); then
 					# Fields:	Number[1]:Start[2]:End[3]:Size[4]:Filesystem[5]:Name[6]:Flags[7]
 					part_data="$(grep "^${REPLY}" "${tmp_file}" | tr -d ';')"
-					rm -f "${tmp_file}"
-
 					part_start="$(echo "${part_data}" | cut -d: -f2 | tr -d 's')"
 					part_end="$(echo "${part_data}" | cut -d: -f3 | tr -d 's')"
 
@@ -156,6 +154,7 @@ _chk-deps
 _chk-opts "$@"
 
 if [[ "${loop}" && "${source_file}" ]] && _parse-multifs; then
+	rm -f "${tmp_file}"
 	mount -o offset="${offset}",sizelimit="${sizelimit}" "$@"
 else
 	mount "$@"
