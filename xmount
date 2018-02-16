@@ -12,12 +12,13 @@
 #						xmount -o loop <image file> <mountdir>
 #						xmount --xinfo
 # Links			:	GitHub			- https://github.com/HackerspaceBremen/xmount
+#									- https://github.com/skynet-devel
 #					Translations	- https://deepl.com
 #					Recommendation	- https://publiccode.eu
 
 Sname="${0##*/}"
 Version="1.0.1"
-Date="2018-02-13"
+Date="2018-02-16"
 
 Dependencies=('parted')
 
