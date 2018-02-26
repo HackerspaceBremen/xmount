@@ -34,7 +34,7 @@ Donation_PayPal="shopping@top-email.net"
 
 
 ### SET VARIABLES ###
-tmp_file="$( mktemp /tmp/${Sname}_tmp.XXXX )"
+tmp_file="$( mktemp /tmp/"${Sname}"_tmp.XXXX )"
 
 ### GLOBAL SETTINGS ###
 echo() { builtin echo -e "$@" ;}
