@@ -21,6 +21,7 @@ Sname="${0##*/}"
 Version="1.0.2"
 Date="2018-03-01"
 
+Depend_libs=()
 Depend_packs=('parted')
 
 Author="skynet-devel"
@@ -34,7 +35,7 @@ Donation_PayPal="shopping@top-email.net"
 
 
 ### SET/DECLARE VARIABLES ###
-readonly Sname Version Date Depend_libs Depend_packs Author Licence Bugreports Donation_PayPal
+readonly Sname Version Date Depend_{libs,packs} Author Licence Bugreports Donation_PayPal
 tmp_file="$( mktemp /tmp/"${Sname}"_tmp.XXXX )"
 
 ### EARLY SETTINGS ###
