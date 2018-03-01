@@ -21,7 +21,7 @@ Sname="${0##*/}"
 Version="1.0.2"
 Date="2018-02-26"
 
-Dependencies=('parted')
+Depend_packs=('parted')
 
 Author="skynet-devel"
 Licence="GPLv3"
@@ -33,10 +33,11 @@ Donation_PayPal="shopping@top-email.net"
 ##########################################
 
 
-### SET VARIABLES ###
+### SET/DECLARE VARIABLES ###
+readonly Sname Version Date Depend_libs Depend_packs Author Licence Bugreports Donation_PayPal
 tmp_file="$( mktemp /tmp/"${Sname}"_tmp.XXXX )"
 
-### GLOBAL SETTINGS ###
+### EARLY SETTINGS ###
 echo() { builtin echo -e "$@" ;}
 read() { builtin read -r "$@" ;}
 
@@ -45,46 +46,19 @@ _err() { echo -e "${Sname}: ERROR: $*" >&2 ;}
 
 trap 'rm -f "${tmp_file}"; echo "\\n"; exit 1' INT TERM HUP
 
-_xinfo()
-{
-cat << EOF
-${Sname} - HELP
-
-DESCRIPTION:
-   '${Sname}' extends the 'mount' command to automatically detect and mount multiple partitions in file images.
-   If more than one partition / file system is detected, one can be selected and mounted in a loop device.
-   It can be used in the same way as the 'mount' command.
-
-EXAMPLES:
-   ${Sname} -o loop <image file> <mountdir>
-   ${Sname} --xinfo
-
-REPORTING BUGS:
-   E-Mail: <${Bugreports}>
-
-DONATIONS:
-   Paypal: <${Donation_PayPal}>
-
-VERSION: ${Version} | DATE: ${Date} | LICENCE: ${Licence} | AUTHOR: ${Author}
-
-Try 'mount --help' for more information.
-
-EOF
-}
-
 ### DEFINE FUNCTIONS ###
 _chk-deps()
 {
-	local c missing_deps
+	local c missing_packs
 
-	for (( c=0 ; c<${#Dependencies[*]} ; c++ )); do
-		if ! which "${Dependencies[$c]}" &>/dev/null; then
-			missing_deps[$c]="'${Dependencies[$c]}'"
+	for (( c=0 ; c<${#Depend_packs[*]} ; c++ )); do
+		if ! which "${Depend_packs[$c]}" &>/dev/null; then
+			missing_packs[$c]="'${Depend_packs[$c]}'"
 		fi
 	done
 
-	if (( ${#missing_deps[*]}>0 )); then
-		_err "missing dependencies = ${missing_deps[*]}"; exit 1
+	if (( ${#missing_packs[*]} > 0 )); then
+		_err "missing packages = ${missing_packs[*]}"; exit 1
 	fi
 }
 
@@ -151,6 +125,34 @@ _parse-multifs()
 				fi
 			done
 	fi
+}
+
+### MULTILINGUAL ###
+_xinfo()
+{
+cat << EOF
+${Sname} - HELP
+
+DESCRIPTION:
+   '${Sname}' extends the 'mount' command to automatically detect and mount multiple partitions in file images.
+   If more than one partition / file system is detected, one can be selected and mounted in a loop device.
+   It can be used in the same way as the 'mount' command.
+
+EXAMPLES:
+   ${Sname} -o loop <image file> <mountdir>
+   ${Sname} --xinfo
+
+REPORTING BUGS:
+   E-Mail: <${Bugreports}>
+
+DONATIONS:
+   Paypal: <${Donation_PayPal}>
+
+VERSION: ${Version} | DATE: ${Date} | LICENCE: ${Licence} | AUTHOR: ${Author}
+
+Try 'mount --help' for more information.
+
+EOF
 }
 
 ### MAIN PROGRAM ###
