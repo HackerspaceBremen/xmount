@@ -19,7 +19,7 @@
 
 Sname="${0##*/}"
 Version="1.0.2"
-Date="2018-03-01"
+Date="2018-03-02"
 
 Depend_libs=()
 Depend_packs=('parted')
